@@ -1,8 +1,8 @@
-use crate::wv::fid_size::FIDSize;
+use crate::fid::fid_size::FIDSize;
 
 pub struct FIDBuilder<S: FIDSize> {
-    bit: Vec<u8>,
-    len: usize,
+    pub bit: Vec<u8>,
+    pub len: usize,
     _phantom: std::marker::PhantomData<S>,
 }
 

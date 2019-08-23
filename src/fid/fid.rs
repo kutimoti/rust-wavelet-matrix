@@ -1,5 +1,5 @@
-use crate::wv::fid_size::FIDSize;
-use crate::wv::fid_builder::FIDBuilder;
+use crate::fid::fid_size::FIDSize;
+use crate::fid::fid_builder::FIDBuilder;
 
 
 pub struct FullyIndexableDictionary<S: FIDSize> {
@@ -13,7 +13,7 @@ pub struct FullyIndexableDictionary<S: FIDSize> {
 
 impl<S: FIDSize> FullyIndexableDictionary<S> {
     pub fn build(builder: FIDBuilder<S>) -> Self {
-        let FIDBuilder { bit: bit, len: len, ..  } = builder;
+        let FIDBuilder { bit, len, ..  } = builder;
         let cnum = (len + S::CW - 1) / S::CW;
         let bnum = len / S::BW;
         let mut chunk = vec![0u16; cnum + 1];
