@@ -15,7 +15,7 @@ impl<S: FIDSize> FullyIndexableDictionary<S> {
     pub fn build(builder: FIDBuilder<S>) -> Self {
         let FIDBuilder { bit, len, ..  } = builder;
         let cnum = (len + S::CW - 1) / S::CW;
-        let bnum = len / S::BW;
+        let bnum = S::CW / S::BW;
         let mut chunk = vec![0u16; cnum + 1];
         let mut blocks = vec![vec![0u8; bnum]; cnum];
 
@@ -42,6 +42,7 @@ impl<S: FIDSize> FullyIndexableDictionary<S> {
         ((self.bit[bpos] >> offset) & 1) as usize
     }
 
+    /* [0, pos) */
     pub fn rank(&self, pos: usize) -> usize {
         let cpos = pos / S::CW;
         let bpos = (pos % S::CW) / S::BW;
@@ -50,6 +51,7 @@ impl<S: FIDSize> FullyIndexableDictionary<S> {
         (self.chunk[cpos] + self.blocks[cpos][bpos] as u16 + masked.count_ones() as u16) as usize
     }
 
+    /* rank(idx) = num */
     pub fn select(&self, num: usize) -> Option<usize> {
         if num == 0 { Some(0) }
         else if self.rank(self.len) < num { None }
