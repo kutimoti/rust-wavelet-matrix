@@ -7,6 +7,7 @@ pub struct WaveletMatrix<S: FIDSize> {
     spl: Vec<usize>,
     bfr: Vec<usize>,
     depth: usize,
+    len: usize,
     _phantom: std::marker::PhantomData<S>
 }
 
@@ -48,21 +49,27 @@ impl<S: FIDSize> WaveletMatrix<S> {
             spl: spl.into_iter().rev().collect(),
             bfr: bfr,
             depth: depth,
+            len: arr.len(),
             _phantom: std::marker::PhantomData,
         }
+    }
+
+    fn dfs_pos_x(&self, pos: usize, x: usize) -> Option<usize> {
+        let WaveletMatrix { mat, spl, depth, .. } = self;
+        let mut p = pos;
+        for d in (0..*depth).rev() {
+            let k = (x >> d) & 1;
+            p = mat[d].rank(p, k) + spl[d] * k;
+        }
+        if p == 0 { None }
+        else { Some(p - 1) }
     }
     
     /* [0, pos) */
     pub fn rank_x(&self, pos: usize, x: usize) -> usize {
-        if pos == 0 { 0 }
-        else {
-            let WaveletMatrix { mat, spl, bfr, depth, .. } = self;
-            let mut p = pos;
-            for d in (0..*depth).rev() {
-                let k = (x >> d) & 1;
-                p = mat[d].rank(p, k) + spl[d] * k;
-            }
-            p - bfr[p - 1]
+        match self.dfs_pos_x(pos, x) {
+            None => 0,
+            Some(p) => p - self.bfr[p] + 1,
         }
     }
 
