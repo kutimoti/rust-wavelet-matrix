@@ -43,24 +43,29 @@ impl<S: FIDSize> FullyIndexableDictionary<S> {
     }
 
     /* [0, pos) */
-    pub fn rank(&self, pos: usize) -> usize {
+    pub fn rank(&self, pos: usize, flag: usize) -> usize {
         let cpos = pos / S::CW;
         let bpos = (pos % S::CW) / S::BW;
         let offset = pos % S::BW;
         let masked = (self.bit[cpos * self.bnum + bpos]) & ((1 << offset) - 1);
-        (self.chunk[cpos] + self.blocks[cpos][bpos] as u16 + masked.count_ones() as u16) as usize
+        let res = (self.chunk[cpos] + self.blocks[cpos][bpos] as u16 + masked.count_ones() as u16) as usize;
+        match flag {
+            0 => pos - res,
+            1 => res,
+            _ => unreachable!(),
+        }
     }
 
     /* rank(idx) = num */
-    pub fn select(&self, num: usize) -> Option<usize> {
+    pub fn select(&self, num: usize, flag: usize) -> Option<usize> {
         if num == 0 { Some(0) }
-        else if self.rank(self.len) < num { None }
+        else if self.rank(self.len, flag) < num { None }
         else {
             let mut ok = self.len;
             let mut ng = 0;
             while ok - ng > 1 {
                 let mid = (ok + ng) / 2;
-                if self.rank(mid) >= num { ok = mid; }
+                if self.rank(mid, flag) >= num { ok = mid; }
                 else { ng = mid }
             }
             Some(ok)

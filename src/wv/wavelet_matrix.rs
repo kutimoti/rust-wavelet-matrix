@@ -60,17 +60,12 @@ impl<S: FIDSize> WaveletMatrix<S> {
             let mut p = pos;
             for d in (0..*depth).rev() {
                 let k = (x >> d) & 1;
-                let rk = mat[d].rank(p);
-                p = if k == 0 {
-                    p - rk
-                }
-                else {
-                    spl[d] + rk
-                }
+                p = mat[d].rank(p, k) + spl[d] * k;
             }
             p - bfr[p - 1]
         }
     }
+
 }
 
 #[cfg(test)]
