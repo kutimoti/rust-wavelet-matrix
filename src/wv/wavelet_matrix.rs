@@ -61,6 +61,18 @@ impl<S: FIDSize> WaveletMatrix<S> {
     pub fn rank_x(&self, ran: Range<usize>, x: usize) -> usize {
         self.dfs_pos_x(ran.end, x) - self.dfs_pos_x(ran.start, x)
     }
+
+    pub fn at(&self, pos: usize) -> usize {
+        let WaveletMatrix { mat, spl, depth, .. } = self;
+        let mut p = pos;
+        let mut x = 0;
+        for d in (0..*depth).rev() {
+            let k = mat[d].access(p);
+            x |= k << d;
+            p = mat[d].rank(p, k) + spl[d] * k;
+        }
+        x
+    }
 }
 
 #[cfg(test)]
@@ -75,5 +87,14 @@ mod wavelet_matrix_test {
         assert_eq!(wv.rank_x(0..vec.len(), 4), 2);
         assert_eq!(wv.rank_x(0..9, 5), 1);
         assert_eq!(wv.rank_x(3..9, 1), 1);
+    }
+
+    #[test]
+    fn at_test() {
+        let vec = vec![0, 7, 1, 1, 4, 3, 6, 7, 5, 5, 0, 4, 7, 6, 6, 3];
+        let wv = WaveletMatrix::<FID256_8>::new(&vec, 4);
+        for i in 0..vec.len() {
+            assert_eq!(vec[i], wv.at(i));
+        }
     }
 }
