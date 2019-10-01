@@ -1,6 +1,7 @@
 use crate::fid::fid_size::{ FIDSize };
 use crate::fid::fid_builder::FIDBuilder;
 use crate::fid::fully_indexable_dictionary::FullyIndexableDictionary;
+use std::ops::Range;
 
 pub struct WaveletMatrix<S: FIDSize> {
     mat: Vec<FullyIndexableDictionary<S>>,
@@ -13,18 +14,18 @@ pub struct WaveletMatrix<S: FIDSize> {
 impl<S: FIDSize> WaveletMatrix<S> {
     pub fn new(arr: &Vec<usize>, depth: usize) -> Self {
         let mut builders = Vec::new();
-        let mut idx = (0..arr.len()).collect();
+        let mut idx: Vec<_> = (0..arr.len()).collect();
         let mut spl = Vec::new();
 
         for d in (0..depth).rev() {
             let mut li = Vec::new();
             let mut ri = Vec::new();
             let mut builder = FIDBuilder::new(arr.len());
-            for i in idx {
-                let k = (arr[i] >> d) & 1;
-                if k == 0 { li.push(i); }
+            for i in 0..arr.len() {
+                let k = (arr[idx[i]] >> d) & 1;
+                if k == 0 { li.push(idx[i]); }
                 else {
-                    ri.push(i);
+                    ri.push(idx[i]);
                     builder.set(i);
                 }
             }
@@ -57,8 +58,8 @@ impl<S: FIDSize> WaveletMatrix<S> {
         return p;
     }
 
-    pub fn rank_x(&self, pos: usize, x: usize) -> usize {
-        self.dfs_pos_x(pos, x) - self.dfs_pos_x(0, x)
+    pub fn rank_x(&self, ran: Range<usize>, x: usize) -> usize {
+        self.dfs_pos_x(ran.end, x) - self.dfs_pos_x(ran.start, x)
     }
 }
 
@@ -71,9 +72,8 @@ mod wavelet_matrix_test {
     fn rank_x_test() {
         let vec = vec![0, 7, 1, 1, 4, 3, 6, 7, 5, 5, 0, 4, 7, 6, 6, 3];
         let wv = WaveletMatrix::<FID256_8>::new(&vec, 4);
-        println!("{:?}", wv.dfs_pos_x(vec.len(), 2));
-        println!("{:?}", wv.dfs_pos_x(0, 2));
-        assert_eq!(wv.rank_x(vec.len(), 4), 2);
-        assert_eq!(wv.rank_x(9, 5), 1);
+        assert_eq!(wv.rank_x(0..vec.len(), 4), 2);
+        assert_eq!(wv.rank_x(0..9, 5), 1);
+        assert_eq!(wv.rank_x(3..9, 1), 1);
     }
 }
